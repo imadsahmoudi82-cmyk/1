@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ONE 1 | PRO</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        :root { 
+            --p: #6c5ce7; --p-light: #efeeff; --bg: #f8f9fd; 
+            --card: #ffffff; --text: #2d3436; --text-light: #636e72;
+            --red: #ff4757; --green: #00b894; --border: #edf2f7; --off: #bdc3c7;
+        }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Segoe UI', sans-serif; transition: 0.2s; }
+        
+        body { background: var(--bg); color: var(--text); margin: 0; padding-bottom: 90px; overflow-x: hidden; }
+
+        /* واجهة الترحيب */
+        #welcome-screen { 
+            position: fixed; inset: 0; background: #fff; z-index: 100000; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
+        }
+        #welcome-screen h1 { color: var(--p); font-size: 35px; margin-bottom: 10px; font-weight: 900; }
+
+        header { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); padding: 10px 15px; position: sticky; top: 0; z-index: 1000; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); }
+        .btn-w { width: 40px; height: 40px; background: var(--p); color: #fff; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; cursor: pointer; }
+        .search-box { flex: 1; background: var(--p-light); border-radius: 12px; display: flex; align-items: center; padding: 0 12px; height: 40px; }
+        .search-box input { border: none; background: none; outline: none; width: 100%; font-size: 14px; }
+
+        /* إصلاح الصفحات والتبديل */
+        .page { display: none; padding: 20px 15px; animation: slideUp 0.3s ease-out; min-height: 80vh; width: 100%; }
+        .page.active { display: block; }
+        #chats.active { display: flex; flex-direction: column; }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Profile Style */
+        .profile-card { background: var(--card); border-radius: 24px; padding: 25px; text-align: center; border: 1px solid var(--border); margin-bottom: 20px; position: relative; }
+        .avatar-box { position: relative; width: 100px; height: 100px; margin: 0 auto 15px; cursor: pointer; }
+        .avatar-box img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .status-dot { position: absolute; bottom: 5px; right: 5px; width: 18px; height: 18px; border-radius: 50%; border: 3px solid #fff; background: var(--green); }
+        
+        .verify-badge { color: var(--p); margin-right: 6px; font-size: 20px; display: none; position: relative; }
+        .verify-badge::after { content: "\f00c"; font-family: "Font Awesome 6 Free"; font-weight: 900; position: absolute; color: white; font-size: 9px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+        .group-label { padding: 0 10px 10px; font-size: 12px; color: var(--text-light); font-weight: bold; }
+        .settings-list { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 20px; }
+        .s-item { display: flex; align-items: center; padding: 16px 18px; cursor: pointer; border-bottom: 1px solid var(--border); }
+        .s-item i { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: var(--p-light); color: var(--p); border-radius: 10px; margin-left: 12px; font-size: 16px; }
+        body[dir="ltr"] .s-item i { margin-left: 0; margin-right: 12px; }
+        .s-item span { flex: 1; font-size: 15px; }
+
+        /* Navigation */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: rgba(255,255,255,0.9); backdrop-filter: blur(15px); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 2000; }
+        .nav-link { color: #b2bec3; font-size: 22px; cursor: pointer; }
+        .nav-link.active { color: var(--p); }
+
+        /* Modals */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(6px); z-index: 50000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-box { background: #fff; width: 100%; max-width: 350px; border-radius: 28px; padding: 25px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 14px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .btn-confirm { background: var(--p); color: #fff; }
+        
+        .pw-success-icon { font-size: 50px; color: var(--green); margin-bottom: 15px; }
+        .spam-alert { background: #fff8eb; border: 1px solid #ffe5b3; color: #856404; padding: 15px; border-radius: 15px; font-size: 13px; margin-top: 15px; line-height: 1.5; text-align: center; }
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #2d3436; color: #fff; padding: 10px 20px; border-radius: 50px; font-size: 13px; z-index: 9999; display: none; }
+    </style>
+</head>
+<body id="appBody">
+
+    <div id="welcome-screen">
+        <h1 id="w-title">ONE 1</h1>
+        <p id="w-msg" data-key="verifying">جاري التحقق من الهوية...</p>
+    </div>
+
+    <header id="mainHeader">
+        <div class="btn-w" onclick="showDev('سيرفر W')">W</div>
+        <div class="search-box"><i class="fa fa-search" style="color:#b2bec3; margin-left:8px"></i><input type="text" data-placeholder="search" placeholder="بحث..."></div>
+    </header>
+
+    <div id="home" class="page active">
+        <div style="text-align:center; padding-top:100px; color:#b2bec3;"><i class="fa-solid fa-layer-group" style="font-size:50px; opacity:0.2;"></i><p data-key="noPosts">لا يوجد منشورات</p></div>
+    </div>
+
+    <div id="chats" class="page">
+        <div style="text-align:center; padding-top:100px; color:#b2bec3;"><i class="fa-solid fa-comments" style="font-size:50px; opacity:0.2;"></i><p data-key="noChats">لا توجد محادثات</p></div>
+        <div style="border:1.5px dashed var(--border); border-radius:15px; padding:15px; text-align:center; margin-top:auto;">
+            <a href="https://wa.me/972592738901" style="text-decoration:none; color:var(--p); font-weight:bold; font-size:14px;" data-key="support">تواصل مع الدعم الفني</a>
+        </div>
+    </div>
+
+    <div id="profile" class="page">
+        <div class="profile-card">
+            <div class="avatar-box" onclick="document.getElementById('fInp').click()">
+                <img id="uImg" src="">
+                <div id="pDot" class="status-dot"></div>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:center;">
+                <h2 id="uName" style="margin:0">...</h2>
+                <i class="fa-solid fa-certificate verify-badge" id="vBadge"></i>
+            </div>
+            <p id="uEmail" style="color:var(--text-light); font-size:13px; margin:5px 0 0;"></p>
+            <input type="file" id="fInp" hidden onchange="upPhoto(this)">
+        </div>
+
+        <div class="group-label" data-key="accSection">قسم الحساب</div>
+        <div class="settings-list">
+            <div class="s-item" onclick="openNameModal()"><i class="fa-regular fa-user"></i><span data-key="changeName">تغيير الاسم المستعار</span></div>
+            <div class="s-item" onclick="resetPassModern()"><i class="fa-solid fa-lock"></i><span data-key="changePass">تغيير كلمة المرور</span></div>
+            <div class="s-item" onclick="confirmAction('del')" style="color:var(--red)"><i class="fa-solid fa-trash-can"></i><span data-key="delAcc">حذف الحساب</span></div>
+        </div>
+
+        <div class="group-label" data-key="privacySection">قسم الخصوصية</div>
+        <div class="settings-list">
+            <div class="s-item" onclick="openBlocked()"><i class="fa-solid fa-user-slash"></i><span data-key="blocked">الحسابات المحظورة</span></div>
+            <div class="s-item">
+                <i class="fa-solid fa-circle-check"></i><span data-key="onlineStatus">إظهار حالة المتصل</span>
+                <input type="checkbox" id="onCheck" checked onchange="toggleStatus(this)" style="margin-right:auto; accent-color:var(--p); width:18px; height:18px;">
+            </div>
+        </div>
+
+        <div class="group-label" data-key="langSection">قسم اللغة</div>
+        <div class="settings-list">
+            <div class="s-item" onclick="changeLang()"><i class="fa-solid fa-globe"></i><span id="currentLangDisplay">العربية</span></div>
+        </div>
+
+        <div class="settings-list" style="margin-top:10px;">
+            <div class="s-item" onclick="confirmAction('out')" style="color:var(--red)"><i class="fa-solid fa-sign-out-alt"></i><span data-key="logout">تسجيل الخروج</span></div>
+        </div>
+    </div>
+
+    <nav class="nav-bar">
+        <div class="nav-link active" onclick="tab('home', this)"><i class="fa-solid fa-house"></i></div>
+        <div class="nav-link" onclick="tab('chats', this)"><i class="fa-regular fa-comment"></i></div>
+        <div class="nav-link" style="background:var(--p); color:#fff; border-radius:50%; width:50px; height:50px; display:flex; align-items:center; justify-content:center; margin-top:-25px; border:4px solid #fff;" onclick="showDev('النشر')"><i class="fa-solid fa-plus"></i></div>
+        <div class="nav-link" onclick="showToast('Coming Soon')"><i class="fa-regular fa-heart"></i></div>
+        <div class="nav-link" onclick="tab('profile', this)"><i class="fa-regular fa-user-circle"></i></div>
+    </nav>
+
+    <div id="overlay" class="modal-overlay">
+        <div class="modal-box" id="modalBox">
+            <h3 id="mTitle"></h3>
+            <div id="mBody"></div>
+            <div class="modal-btns" id="mBtns"></div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut, sendPasswordResetEmail, deleteUser } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const config = { apiKey: "AIzaSyDj1jWQZHnELXe_eFkfGpi3F3_jPGhPm7I", authDomain: "one1-95c0e.firebaseapp.com", projectId: "one1-95c0e", appId: "1:1090900617422:web:f6e9c11bb7a090c39ec89f" };
+        const app = initializeApp(config);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- البيانات والترجمة الكاملة ---
+        const langData = {
+            ar: {
+                verifying: "جاري التحقق من الهوية...", welcome: "مرحبا بك يا ", welcomeMsg: "يسعدنا انضمامك إلينا في ONE 1",
+                search: "بحث...", noPosts: "لا يوجد منشورات", noChats: "لا توجد محادثات", support: "تواصل مع الدعم الفني",
+                accSection: "قسم الحساب", changeName: "تغيير الاسم المستعار", changePass: "تغيير كلمة المرور",
+                delAcc: "حذف الحساب", privacySection: "قسم الخصوصية", blocked: "الحسابات المحظورة", onlineStatus: "إظهار حالة المتصل",
+                langSection: "قسم اللغة", logout: "تسجيل الخروج", cancel: "إلغاء", ok: "حسناً",
+                spamNote: "<b>ملاحظة هامة:</b> إذا لم تجد الرسالة، يرجى فحص مجلد الرسائل غير المرغوب فيها <b>(SPAM)</b>.",
+                pwSent: "تم إرسال الرابط بنجاح", confirmLogout: "هل أنت متأكد من تسجيل الخروج؟", confirmDel: "سيتم حذف حسابك نهائياً، هل أنت متأكد؟",
+                updateSuccess: "تم التحديث بنجاح", emptyBlocked: "لا يوجد مستخدمون محظورون حالياً.", placeholderName: "اكتب الاسم الجديد هنا..."
+            },
+            en: {
+                verifying: "Verifying identity...", welcome: "Welcome, ", welcomeMsg: "Happy to see you in ONE 1",
+                search: "Search...", noPosts: "No posts found", noChats: "No chats yet", support: "Contact Support",
+                accSection: "Account settings", changeName: "Change Nickname", changePass: "Change Password",
+                delAcc: "Delete Account", privacySection: "Privacy Settings", blocked: "Blocked Users", onlineStatus: "Show Online Status",
+                langSection: "Language", logout: "Logout", cancel: "Cancel", ok: "OK",
+                spamNote: "<b>Important:</b> If you don't find the email, please check your <b>SPAM folder</b>.",
+                pwSent: "Link sent successfully", confirmLogout: "Are you sure you want to logout?", confirmDel: "Your account will be permanently deleted. Continue?",
+                updateSuccess: "Updated successfully", emptyBlocked: "No blocked users at the moment.", placeholderName: "Type new name here..."
+            }
+        };
+
+        let currentLang = localStorage.getItem('lang') || 'ar';
+
+        window.updateUI = () => {
+            const lang = langData[currentLang];
+            document.documentElement.lang = currentLang;
+            document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            document.getElementById('appBody').dir = document.documentElement.dir;
+            document.querySelectorAll('[data-key]').forEach(el => el.innerHTML = lang[el.getAttribute('data-key')]);
+            document.querySelectorAll('[data-placeholder]').forEach(el => el.placeholder = lang[el.getAttribute('data-placeholder')]);
+            document.getElementById('currentLangDisplay').innerText = currentLang === 'ar' ? 'العربية' : 'English';
+        };
+
+        window.changeLang = () => {
+            currentLang = currentLang === 'ar' ? 'en' : 'ar';
+            localStorage.setItem('lang', currentLang);
+            updateUI();
+        };
+
+        updateUI();
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                onSnapshot(doc(db, "users", user.uid), (ds) => {
+                    if (ds.exists()) {
+                        const d = ds.data();
+                        document.getElementById('uName').innerText = d.name;
+                        document.getElementById('uEmail').innerText = user.email;
+                        document.getElementById('uImg').src = d.photo || `https://ui-avatars.com/api/?name=${d.name}&background=6c5ce7&color=fff`;
+                        document.getElementById('vBadge').style.display = d.isVerified ? 'flex' : 'none';
+                        document.getElementById('w-title').innerText = langData[currentLang].welcome + d.name;
+                        document.getElementById('w-msg').innerText = langData[currentLang].welcomeMsg;
+                        setTimeout(() => document.getElementById('welcome-screen').style.display = 'none', 3500);
+                    }
+                });
+            } else {
+                window.location.href = "auth.html";
+            }
+        });
+
+        // --- وظيفة التبديل ومنع التداخل ---
+        window.tab = (id, el) => {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+            // إخفاء الهيدر في البروفايل يمنع تداخل محتوى الدردشة نهائياً
+            document.getElementById('mainHeader').style.display = (id === 'profile') ? 'none' : 'flex';
+        };
+
+        // --- وظائف المودال (الاسم، المحظورين، كلمة المرور) ---
+        const overlay = document.getElementById('overlay');
+        const modalBox = document.getElementById('modalBox');
+
+        window.closeModal = () => {
+            overlay.style.display = 'none';
+            modalBox.innerHTML = `<h3 id="mTitle"></h3><div id="mBody"></div><div class="modal-btns" id="mBtns"></div>`;
+        };
+
+        window.openNameModal = () => {
+            const lang = langData[currentLang];
+            overlay.style.display = 'flex';
+            modalBox.innerHTML = `
+                <div style="font-size:40px; color:var(--p); margin-bottom:15px;"><i class="fa-regular fa-id-card"></i></div>
+                <h3>${lang.changeName}</h3>
+                <input type="text" id="newNameInp" placeholder="${lang.placeholderName}" style="width:100%; padding:12px; border-radius:12px; border:1px solid var(--border); background:var(--bg); margin-top:10px; outline:none; text-align:center;">
+                <div class="modal-btns">
+                    <button class="btn btn-confirm" onclick="saveName()">${lang.ok}</button>
+                    <button class="btn" onclick="closeModal()" style="background:var(--border)">${lang.cancel}</button>
+                </div>
+            `;
+        };
+
+        window.saveName = async () => {
+            const val = document.getElementById('newNameInp').value;
+            if(val.trim().length > 2) {
+                await updateDoc(doc(db, "users", auth.currentUser.uid), { name: val });
+                closeModal();
+                showToast(langData[currentLang].updateSuccess);
+            }
+        };
+
+        window.resetPassModern = () => {
+            const lang = langData[currentLang];
+            sendPasswordResetEmail(auth, auth.currentUser.email).then(() => {
+                overlay.style.display = 'flex';
+                modalBox.innerHTML = `
+                    <div class="pw-success-icon"><i class="fa-solid fa-envelope-circle-check"></i></div>
+                    <h3>${lang.pwSent}</h3>
+                    <p style="color:var(--text-light); font-size:14px; margin:10px 0;">${auth.currentUser.email}</p>
+                    <div class="spam-alert">${lang.spamNote}</div>
+                    <button class="btn btn-confirm" style="width:100%; margin-top:20px;" onclick="closeModal()">${lang.ok}</button>
+                `;
+            });
+        };
+
+        window.openBlocked = () => {
+            const lang = langData[currentLang];
+            overlay.style.display = 'flex';
+            modalBox.innerHTML = `
+                <div style="font-size:40px; color:var(--red); margin-bottom:15px;"><i class="fa-solid fa-user-lock"></i></div>
+                <h3>${lang.blocked}</h3>
+                <p style="padding:10px; color:var(--text-light);">${lang.emptyBlocked}</p>
+                <button class="btn btn-confirm" style="width:100%;" onclick="closeModal()">${lang.ok}</button>
+            `;
+        };
+
+        window.confirmAction = (type) => {
+            const lang = langData[currentLang];
+            overlay.style.display = 'flex';
+            const mTitle = document.getElementById('mTitle');
+            const mBody = document.getElementById('mBody');
+            const mBtns = document.getElementById('mBtns');
+            
+            if(type === 'out') {
+                mTitle.innerText = lang.logout;
+                mBody.innerHTML = lang.confirmLogout;
+                mBtns.innerHTML = `<button class="btn btn-confirm" onclick="signOut(auth).then(()=>location.reload())">${lang.logout}</button><button class="btn" onclick="closeModal()">${lang.cancel}</button>`;
+            } else if(type === 'del') {
+                mTitle.innerText = lang.delAcc;
+                mBody.innerHTML = lang.confirmDel;
+                mBtns.innerHTML = `<button class="btn btn-confirm" style="background:var(--red)" onclick="deleteNow()">${lang.delAcc}</button><button class="btn" onclick="closeModal()">${lang.cancel}</button>`;
+            }
+        };
+
+        window.deleteNow = async () => {
+            const user = auth.currentUser;
+            await deleteDoc(doc(db, "users", user.uid));
+            deleteUser(user).then(() => location.reload()).catch(() => showToast("Re-login required"));
+        };
+
+        window.showToast = (m) => {
+            const t = document.getElementById('toast'); t.innerText = m;
+            t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2000);
+        };
+
+        window.showDev = (f) => showToast(f + (currentLang === 'ar' ? " قريباً" : " Coming Soon"));
+        window.toggleStatus = (cb) => document.getElementById('pDot').style.background = cb.checked ? "var(--green)" : "var(--off)";
+        
+        window.upPhoto = (input) => {
+            const file = input.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = async (e) => { 
+                    await updateDoc(doc(db, "users", auth.currentUser.uid), { photo: e.target.result });
+                    showToast(langData[currentLang].updateSuccess);
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+    </script>
+</body>
+</html>
